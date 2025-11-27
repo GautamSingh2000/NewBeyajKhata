@@ -121,7 +121,7 @@ class _EditContactScreenState extends State<EditContactScreen> {
       colorValue: Colors.primaries["Alice".length % Colors.primaries.length].value,
       displayAmount: _principalController.text.trim().isNotEmpty
           ? double.tryParse(_principalController.text.trim()) ?? 0.0 : widget.contact.principal,
-      isGet: true,
+      isGet: _selectedType == ContactType.borrower ? true : false,
       dayAgo: 0,
       lastEditedAt: DateTime.now(),
       contactId: widget.contact.contactId,
@@ -149,6 +149,7 @@ class _EditContactScreenState extends State<EditContactScreen> {
       if (widget.contact.isNewContact == true) {
         // Short delay to allow the previous screen to process the result
         Future.delayed(const Duration(milliseconds: 300), () {
+          if (!mounted) return;
           Logger log = Logger();
           log.e("Navigating to details of contact: ${updatedContact.name} with interest type ${widget.isWithInterest}");
           // Find the ContactDetailScreen and show the transaction entry dialog

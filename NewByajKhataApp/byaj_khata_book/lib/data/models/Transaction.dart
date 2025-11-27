@@ -17,7 +17,7 @@ class Transaction extends HiveObject {
   String note;
 
   @HiveField(4)
-  String? imagePath;
+  List<String>? imagePath;
 
   @HiveField(5)
   bool isInterestPayment;

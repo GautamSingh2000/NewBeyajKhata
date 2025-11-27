@@ -10,7 +10,7 @@ import '../core/di/ServiceLocator.dart';
 import '../core/utils/HomeScreenEnum.dart';
 
 class HomeProvider with ChangeNotifier {
-  final prefs = locator<SharedPreferences>();
+  final prefs = SPInstane<SharedPreferences>();
   bool _isWithInterest = false;
 
   List<Contact> _withoutInterestContacts = [];

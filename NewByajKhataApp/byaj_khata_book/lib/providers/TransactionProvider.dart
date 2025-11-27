@@ -10,7 +10,7 @@ class TransactionProvider extends ChangeNotifier {
   // Map of contactId -> list of transactions
   Map<String, List<Map<String, dynamic>>> _contactTransactions = {};
 
-  final prefs = locator<SharedPreferences>();
+  final prefs = SPInstane<SharedPreferences>();
 
   // UUID generator
   final _uuid = const Uuid();

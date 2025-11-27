@@ -80,6 +80,7 @@ class TransactionProviderr extends ChangeNotifier {
       contacts = contacts.where((c) {
         final name = c.name.toLowerCase();
         final phone = c.contactId.toLowerCase();
+        // final balance = calculateBalance(c.contactId).toString();
         final balance = calculateBalance(c.contactId).toString();
         return name.contains(lowerQuery) ||
             phone.contains(lowerQuery) ||
@@ -178,7 +179,7 @@ class TransactionProviderr extends ChangeNotifier {
     String type,
     DateTime date,
     String note,
-    String? imagePath,
+    List<String>? imagePath,
     bool isPrincipal, {
     double balanceAfterTx = 0.0,
   }) async {
@@ -192,10 +193,9 @@ class TransactionProviderr extends ChangeNotifier {
       amount: positiveAmount,
       note: note,
       imagePath: imagePath,
-      isInterestPayment: false,
       contactId: contactId,
       transactionType: type,
-      // 'gave' or 'got'
+      isInterestPayment: isPrincipal ? false : true,
       isPrincipal: isPrincipal,
       balanceAfterTx: balanceAfterTx,
     );
@@ -288,7 +288,10 @@ class TransactionProviderr extends ChangeNotifier {
         }
       }
     } else {
-      balance = 0.0;
+      Contact? c = getContactById(contactId);
+      if(c!=null) {
+        if(c.isGet) balance = c.principal; else balance = -c.principal;
+      }
     }
     logger.e("calculating balance $balance of id $contactId");
     return balance;

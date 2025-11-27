@@ -22,7 +22,7 @@ class TransactionAdapter extends TypeAdapter<Transaction> {
       contactId: fields[6] as String,
       transactionType: fields[2] as String,
       note: fields[3] as String,
-      imagePath: fields[4] as String?,
+      imagePath: (fields[4] as List?)?.cast<String>(),
       isInterestPayment: fields[5] as bool,
       isPrincipal: fields[7] as bool,
       interestRate: fields[8] as double?,

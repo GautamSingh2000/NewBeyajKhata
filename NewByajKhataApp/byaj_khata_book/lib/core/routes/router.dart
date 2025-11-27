@@ -1,7 +1,7 @@
 import 'package:byaj_khata_book/data/models/Contact.dart';
 import 'package:byaj_khata_book/screens/BillDiaryScreen.dart';
 import 'package:byaj_khata_book/screens/CardScreen.dart';
-import 'package:byaj_khata_book/screens/EmiCalculatorScreen.dart';
+import 'package:byaj_khata_book/screens/Emi/EmiCalculatorScreen.dart';
 import 'package:byaj_khata_book/screens/HistoryScreen.dart';
 import 'package:byaj_khata_book/screens/MilkDiaryScreen.dart';
 import 'package:byaj_khata_book/screens/SipCalculatorScreen.dart';
@@ -14,7 +14,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../screens/GlobalScreen.dart';
 import '../../screens/Home/HomeScreen.dart';
-import '../../screens/LoanScreen.dart';
+import '../../screens/loan/LoanScreen.dart';
 import '../../screens/LoginScreen.dart';
 import '../../screens/contacts/SelectContactScreen.dart';
 import '../../screens/SplashScreen.dart';

@@ -30,6 +30,7 @@ class ContactAdapter extends TypeAdapter<Contact> {
       interestType: fields[7] as InterestType,
       interestDue: fields[8] as double,
       isGet: fields[13] as bool,
+      lastInterestCycleDate: fields[18] as DateTime?,
       isNewContact: fields[16] as bool,
       profileImage: fields[17] as String?,
       principal: fields[9] as double,
@@ -41,7 +42,7 @@ class ContactAdapter extends TypeAdapter<Contact> {
   @override
   void write(BinaryWriter writer, Contact obj) {
     writer
-      ..writeByte(18)
+      ..writeByte(19)
       ..writeByte(0)
       ..write(obj.contactId)
       ..writeByte(1)
@@ -77,7 +78,9 @@ class ContactAdapter extends TypeAdapter<Contact> {
       ..writeByte(16)
       ..write(obj.isNewContact)
       ..writeByte(17)
-      ..write(obj.profileImage);
+      ..write(obj.profileImage)
+      ..writeByte(18)
+      ..write(obj.lastInterestCycleDate);
   }
 
   @override

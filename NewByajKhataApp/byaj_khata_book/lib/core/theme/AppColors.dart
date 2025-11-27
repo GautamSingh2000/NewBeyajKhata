@@ -7,6 +7,8 @@ class AppColors {
   static const Color gradientEnd   = Color(0xFF1A237E); // Indigo 900
   static final Color blue0001   = Colors.blue.shade700 ; // Indigo 900
   static final Color blue0002   = Colors.blue.shade600; // Indigo 900
+  static final Color blue0003   = Colors.blue.shade500; // Indigo 900
+  static final Color blue0004   = Colors.blue.shade200; // Indigo 900
 
   // Logo
   static const Color logoCircle = Colors.white;
@@ -22,6 +24,11 @@ class AppColors {
   static final Color gray0002 = Color(0xE4E3E3FF);
   static const Color textShadow = Colors.black45;
   static const Color textGray = Colors.black45;
+  static const Color gray = Color(0xFFEEEEEE);
+
+
+  static const Color yellow = Color(0xFFFFE230);
+  static const Color yellow0001 = Color(0xFFD80101);
 
   // Progress Indicator
   static const Color loader = Colors.white70;

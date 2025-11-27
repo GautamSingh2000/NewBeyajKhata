@@ -4,6 +4,7 @@ import 'package:byaj_khata_book/data/models/Transaction.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:logger/logger.dart';
 import 'package:provider/provider.dart';
 
 import '../core/constants/ContactType.dart';
@@ -23,6 +24,10 @@ Widget HomeScreenSingleContact(
   final isGet = contact.isGet;
   final contactId = contact.contactId;
 
+  final logger = new Logger();
+  logger.e("principal and interets due for contact ${contact.name} : ${contact.principal}  ${contact.interestDue}");
+
+
   // Get last edited time and format it (update this to ensure consistent formatting)
   String timeText;
 
@@ -37,50 +42,26 @@ Widget HomeScreenSingleContact(
   final transactionProvider = Provider.of<TransactionProviderr>(context);
 
   // Get balance from transactions
-  double originalBalance = contact.principal;
-  double displayAmount = originalBalance;
+
+  double principalAmount = contact.principal;
+  double displayAmount = principalAmount;
+  double totalInterestDue = _calculateUpdatedInterestDue(contact);
 final transactions = transactionProvider.getTransactionsForContact(contactId);
   // Get updated balance from transactions if available
   if (transactions.isNotEmpty) {
-    final balance = transactions[transactions.length - 1].balanceAfterTx;
-    if(balance == -1){
-      displayAmount = contact.displayAmount;
-    }else{
-      displayAmount = balance.abs();
+
+    final lastBalance = transactions.last.balanceAfterTx;
+    if (lastBalance == -1) {
+      displayAmount = contact.displayAmount + totalInterestDue;
+    } else {
+      displayAmount = (lastBalance.abs()) + totalInterestDue;
     }
+  } else {
+    // No transactions yet — just show principal + interest
+    displayAmount = principalAmount + totalInterestDue;
   }
 
-  // Calculate interest details if this is an interest-based contact
-  double totalInterestDue = 0.0;
-  double principalAmount = contact.principal;
-
-  if (contact.interestType == InterestType.withInterest && transactions.isNotEmpty) {
-    // Get interest rate from contact
-    final double interestRate = contact.interestRate;
-    final ContactType contactType = contact.contactType;
-    final bool isMonthly = contact.interestPeriod == InterestPeriod.monthly;
-
-    // Get interest due from contact or calculate it if missing
-    totalInterestDue = contact.interestDue as double? ?? 0.0;
-
-    // If interest due is missing, calculate it
-    if (totalInterestDue <= 0) {
-      // Call calculateInterestForContact to get accurate interest
-      totalInterestDue = _calculateInterestForContact(
-        contact,
-        transactionProvider.getTransactionsForContact(contactId),
-        interestRate,
-        isMonthly,
-        contactType,
-      );
-
-      // Store it in the contact for future use
-      contact.interestDue = totalInterestDue;
-    }
-
-    // Update the display amount to include interest
-    contact.displayAmount = principalAmount + totalInterestDue;
-  }
+  // contact.displayAmount = displayAmount;
 
   // Format amount for display with compact notation for large values
   String amountText = formatCompactCurrency(displayAmount);
@@ -169,12 +150,14 @@ final transactions = transactionProvider.getTransactionsForContact(contactId);
         // Delete contact and related transactions
         await transactionProvider.deleteContact(contact.contactId);
         // Optional: show feedback
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("${contact.name} deleted"),
-            backgroundColor: Colors.red.shade600,
-          ),
-        );
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text("${contact.name} deleted"),
+              backgroundColor: Colors.red.shade600,
+            ),
+          );
+        }
       },
 
       child: Container(
@@ -462,205 +445,45 @@ final transactions = transactionProvider.getTransactionsForContact(contactId);
 }
 
 // Helper method to calculate interest for an individual contact
-double _calculateInterestForContact(
-  Contact contact,
-  List<Transaction> transactions,
-  double interestRate,
-  bool isMonthly,
-  ContactType contactType,
-) {
-  // If there are no transactions, return 0
-  if (transactions.isEmpty) {
-    return 0.0;
+double _calculateUpdatedInterestDue(Contact contact) {
+  if (contact.interestType != InterestType.withInterest) return 0.0;
+  if (contact.principal <= 0) return 0.0;
+
+  final double principal = contact.principal;
+  final double rate = contact.interestRate;
+  final InterestPeriod period = contact.interestPeriod ?? InterestPeriod.yearly;
+  final DateTime now = DateTime.now();
+  final DateTime lastCycleDate = contact.lastInterestCycleDate ?? now;
+  final int daysPassed = now.difference(lastCycleDate).inDays;
+
+  // ✅ Skip if same day (no new growth)
+  if (daysPassed <= 0) return contact.interestDue;
+
+  double newInterest = 0.0;
+  switch (period) {
+    case InterestPeriod.daily:
+      newInterest = principal * (rate / 100) * daysPassed;
+      break;
+    case InterestPeriod.weekly:
+      final weeks = daysPassed / 7.0;
+      newInterest = principal * (rate / 100) * weeks;
+      break;
+    case InterestPeriod.monthly:
+      final months = daysPassed / 30.0;
+      newInterest = principal * (rate / 100) * months;
+      break;
+    case InterestPeriod.yearly:
+      final years = daysPassed / 365.0;
+      newInterest = principal * (rate / 100) * years;
+      break;
   }
 
-  // Sort transactions chronologically
-  transactions.sort(
-    (a, b) => (a.date as DateTime).compareTo(b.date as DateTime),
-  );
+  // ✅ Add new interest to existing unpaid interest
+  double totalInterest = contact.interestDue + newInterest;
 
-  // Calculate interest using the transaction history
-  DateTime? lastInterestDate = transactions.first.date as DateTime;
-  double runningPrincipal = 0.0;
-  double accumulatedInterest = 0.0;
-  double interestPaid = 0.0;
-
-  for (var tx in transactions) {
-    final note = (tx.note ?? '').toLowerCase();
-    final amount = tx.amount as double;
-    final isGave = tx.transactionType == 'gave';
-    final txDate = tx.date as DateTime;
-
-    // Calculate interest up to this transaction
-    if (lastInterestDate != null && runningPrincipal > 0) {
-      final daysSinceLastCalculation = txDate
-          .difference(lastInterestDate)
-          .inDays;
-      if (daysSinceLastCalculation > 0) {
-        // Calculate interest based on complete months and remaining days
-        double interestForPeriod = 0.0;
-
-        if (isMonthly) {
-          // Monthly interest calculation logic
-          int completeMonths = 0;
-          DateTime tempDate = DateTime(
-            lastInterestDate.year,
-            lastInterestDate.month,
-            lastInterestDate.day,
-          );
-
-          while (true) {
-            // Try to add one month
-            DateTime nextMonth = DateTime(
-              tempDate.year,
-              tempDate.month + 1,
-              tempDate.day,
-            );
-
-            // If adding one month exceeds the transaction date, break
-            if (nextMonth.isAfter(txDate)) {
-              break;
-            }
-
-            // Count this month and move to next
-            completeMonths++;
-            tempDate = nextMonth;
-          }
-
-          // Apply full monthly interest for complete months
-          if (completeMonths > 0) {
-            interestForPeriod +=
-                runningPrincipal * (interestRate / 100) * completeMonths;
-          }
-
-          // Add remaining days as fraction of a month
-          final remainingDays = txDate.difference(tempDate).inDays;
-          if (remainingDays > 0) {
-            final daysInMonth = DateTime(
-              tempDate.year,
-              tempDate.month + 1,
-              0,
-            ).day;
-            double monthProportion = remainingDays / daysInMonth;
-            interestForPeriod +=
-                runningPrincipal * (interestRate / 100) * monthProportion;
-          }
-        } else {
-          // Yearly interest calculation converted to daily rate
-          final dailyRate = interestRate / 365;
-          interestForPeriod +=
-              runningPrincipal * (dailyRate / 100) * daysSinceLastCalculation;
-        }
-
-        accumulatedInterest += interestForPeriod;
-      }
-    }
-
-    // Update based on transaction type
-    if (note.contains('interest:')) {
-      if (isGave) {
-        // Interest payment made
-        if (contactType == ContactType.borrower) {
-          // For borrowers: interest payment adds to accumulated interest
-          accumulatedInterest += amount;
-        } else {
-          // For lenders: interest payment reduces accumulated interest
-          accumulatedInterest = (accumulatedInterest - amount > 0)
-              ? accumulatedInterest - amount
-              : 0;
-        }
-      } else {
-        // Interest payment received
-        interestPaid += amount;
-      }
-    } else {
-      // Principal transaction
-      if (isGave) {
-        // Payment sent
-        if (contactType == ContactType.borrower) {
-          // For borrowers: principal payment adds to debt
-          runningPrincipal += amount;
-        } else {
-          // For lenders: principal payment reduces debt
-          runningPrincipal = (runningPrincipal - amount > 0)
-              ? runningPrincipal - amount
-              : 0;
-        }
-      } else {
-        // Payment received
-        if (contactType == ContactType.borrower) {
-          // For borrowers, receiving payment decreases principal
-          runningPrincipal = (runningPrincipal - amount > 0)
-              ? runningPrincipal - amount
-              : 0;
-        } else {
-          // For lenders, receiving payment increases principal (lender gave money)
-          runningPrincipal += amount;
-        }
-      }
-    }
-
-    lastInterestDate = txDate;
-  }
-
-  // Calculate interest from last transaction to now
-  if (lastInterestDate != null && runningPrincipal > 0) {
-    // Calculate interest from last transaction to today
-    double interestFromLastTx = 0.0;
-    final now = DateTime.now();
-
-    if (isMonthly) {
-      // Monthly interest calculation logic for current period
-      int completeMonths = 0;
-      DateTime tempDate = DateTime(
-        lastInterestDate.year,
-        lastInterestDate.month,
-        lastInterestDate.day,
-      );
-
-      while (true) {
-        DateTime nextMonth = DateTime(
-          tempDate.year,
-          tempDate.month + 1,
-          tempDate.day,
-        );
-        if (nextMonth.isAfter(now)) {
-          break;
-        }
-        completeMonths++;
-        tempDate = nextMonth;
-      }
-
-      if (completeMonths > 0) {
-        interestFromLastTx +=
-            runningPrincipal * (interestRate / 100) * completeMonths;
-      }
-
-      final remainingDays = now.difference(tempDate).inDays;
-      if (remainingDays > 0) {
-        final daysInMonth = DateTime(tempDate.year, tempDate.month + 1, 0).day;
-        double monthProportion = remainingDays / daysInMonth;
-        interestFromLastTx +=
-            runningPrincipal * (interestRate / 100) * monthProportion;
-      }
-    } else {
-      // Yearly interest calculation for current period
-      final daysSinceLastTx = now.difference(lastInterestDate).inDays;
-      final dailyRate = interestRate / 365;
-      interestFromLastTx +=
-          runningPrincipal * (dailyRate / 100) * daysSinceLastTx;
-    }
-
-    accumulatedInterest += interestFromLastTx;
-  }
-
-  // Adjust for interest already paid - show net interest due
-  double totalInterestDue = (accumulatedInterest - interestPaid > 0)
-      ? accumulatedInterest - interestPaid
-      : 0;
-
-  return totalInterestDue;
+  return totalInterest;
 }
+
 
 String _getMonthAbbreviation() {
   final now = DateTime.now();

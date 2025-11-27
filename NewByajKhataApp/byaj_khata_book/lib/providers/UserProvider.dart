@@ -13,7 +13,7 @@ class UserProvider with ChangeNotifier {
 
   static String _userDataKey(String mobile) => 'user_data_$mobile';
 
-  final prefs = locator<SharedPreferences>();
+  final prefs = SPInstane<SharedPreferences>();
 
 
   // Check if user exists by checking if we have stored their data
@@ -107,6 +107,7 @@ class UserProvider with ChangeNotifier {
   Future<void> updateUserProfile({
     String? name,
     String? mobile,
+    String? address,
     String? profileImagePath,
   }) async {
     if (_user == null) return;
@@ -115,6 +116,7 @@ class UserProvider with ChangeNotifier {
       final oldMobile = _user!.mobile;
       if (name != null) _user!.name = name;
       if (mobile != null) _user!.mobile = mobile;
+      if (address != null) _user!.address = address;
       if (profileImagePath != null) _user!.profileImagePath = profileImagePath;
 
       // Save updated user data
@@ -146,6 +148,7 @@ class UserProvider with ChangeNotifier {
         final name = prefs.getString(SharedPreferenceKeys.USER_NAME_KEY);
         final mobile = prefs.getString(SharedPreferenceKeys.USER_MOBILE_KEY);
         final profileImagePath = prefs.getString(SharedPreferenceKeys.USER_PROFILE_IMAGE_KEY);
+        final address = prefs.getString(SharedPreferenceKeys.USER_ADDRESS_KEY); // ⭐ NEW
 
         if (id != null && name != null) {
           _user = User(
@@ -153,6 +156,7 @@ class UserProvider with ChangeNotifier {
             name: name,
             mobile: mobile,
             profileImagePath: profileImagePath,
+            address: address,
           );
 
           debugPrint("Loaded user data from SharedPreferences: ${_user?.name} (${_user?.mobile})");
@@ -192,6 +196,7 @@ class UserProvider with ChangeNotifier {
         if (_user!.profileImagePath != null) {
           await prefs.setString(SharedPreferenceKeys.USER_PROFILE_IMAGE_KEY, _user!.profileImagePath!);
         }
+        await prefs.setString(SharedPreferenceKeys.USER_ADDRESS_KEY, _user?.address ?? "");
         await prefs.setBool(SharedPreferenceKeys.IS_LOGGIN_KEY, true);
 
         debugPrint("Saved user data to shared preferences");

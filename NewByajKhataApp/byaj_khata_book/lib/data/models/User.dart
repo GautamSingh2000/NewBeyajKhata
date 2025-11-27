@@ -3,12 +3,14 @@ class User {
   String name;
   String? mobile;
   String? profileImagePath;
+  String? address;
 
   User({
     required this.id,
     required this.name,
     this.mobile = '',
     this.profileImagePath,
+    this.address = '',
   });
 
   Map<String, dynamic> toJson() {
@@ -17,6 +19,7 @@ class User {
       'name': name,
       'mobile': mobile ?? '',
       'profileImagePath': profileImagePath,
+      'address': address,      // ⭐ NEW
     };
   }
 
@@ -26,6 +29,7 @@ class User {
       name: json['name'],
       mobile: json['mobile'] ?? '',
       profileImagePath: json['profileImagePath'],
+      address: json['address'] ?? '',    // ⭐ NEW
     );
   }
 }

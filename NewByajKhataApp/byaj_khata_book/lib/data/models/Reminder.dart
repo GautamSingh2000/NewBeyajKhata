@@ -5,7 +5,7 @@ part 'Reminder.g.dart';
 @HiveType(typeId: 2)
 class Reminder {
   @HiveField(0)
-  String id;
+  String contactId;
 
   @HiveField(1)
   String title;
@@ -14,7 +14,7 @@ class Reminder {
   double amount;
 
   @HiveField(3)
-  DateTime dueDate;
+  DateTime? dueDate;
 
   @HiveField(4)
   int daysLeft;
@@ -22,11 +22,31 @@ class Reminder {
   @HiveField(5)
   bool isCompleted;
 
+  @HiveField(6)
+  DateTime scheduledDate;
+
+  @HiveField(7)
+  int reminderId;
+
+  @HiveField(8)
+  String message;
+
+  @HiveField(9)
+  DateTime createAt;
+
+  @HiveField(10)
+  String name;
+
   Reminder({
-    required this.id,
-    required this.title,
-    required this.amount,
-    required this.dueDate,
+    required this.contactId,
+    required this.reminderId,
+    required this.scheduledDate,
+    this.amount = 0,
+    this.dueDate,
+    required this.createAt,
+    required this.name,
+    this.message = "",
+    this.title = "",
     this.daysLeft = 0,
     this.isCompleted = false,
   });

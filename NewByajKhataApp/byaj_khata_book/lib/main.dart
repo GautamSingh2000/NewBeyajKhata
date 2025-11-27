@@ -1,13 +1,18 @@
 import 'dart:io';
 
 import 'package:byaj_khata_book/core/constants/SharedPreferenceKeys.dart';
+import 'package:byaj_khata_book/data/models/Installment.dart';
 import 'package:byaj_khata_book/providers/GlobalProvider.dart';
 import 'package:byaj_khata_book/providers/HomeProvider.dart';
+import 'package:byaj_khata_book/providers/LoanProvider.dart';
+import 'package:byaj_khata_book/providers/ReminderProvider.dart';
 import 'package:byaj_khata_book/providers/TransactionProvider.dart';
 import 'package:byaj_khata_book/providers/TransactionProviderr.dart';
 import 'package:byaj_khata_book/providers/UserProvider.dart';
 import 'package:byaj_khata_book/providers/bottomNavigationProvider.dart';
 import 'package:byaj_khata_book/providers/theme_provider.dart';
+import 'package:byaj_khata_book/screens/loan/LoanScreen.dart';
+import 'package:byaj_khata_book/widgets/LoanSummaryCard.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -18,17 +23,24 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/adapters.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'core/di/ServiceLocator.dart';
 import 'core/routes/router.dart';
 import 'package:provider/provider.dart';
 
+import 'core/utils/permissions.dart';
 import 'data/models/Contact.dart';
 import 'data/models/Reminder.dart';
+import 'data/models/SingleLoan.dart';
 import 'data/models/Transaction.dart';
 import 'core/constants/InterestType.dart';
 import 'core/constants/ContactType.dart';
 import 'core/constants/InterestPeriod.dart';
+
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:timezone/data/latest.dart' as tz;
+import 'package:timezone/timezone.dart' as tz;
 
 
 // Global notification service
@@ -154,6 +166,42 @@ Future<void> main() async {
 //     print('App will continue in local-only mode without Firebase.');
 //     print('==============================');
 //   }
+  // Initialize timezone database
+  tz.initializeTimeZones();
+
+// Initialize the local notifications plugin
+  final flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+
+// Define initialization settings for Android & iOS
+  const AndroidInitializationSettings androidInitSettings =
+  AndroidInitializationSettings('@mipmap/ic_launcher');
+
+  const DarwinInitializationSettings iosInitSettings = DarwinInitializationSettings();
+
+// Combine both platform settings
+  const InitializationSettings initSettings = InitializationSettings(
+    android: androidInitSettings,
+    iOS: iosInitSettings,
+  );
+
+  if (Platform.isIOS) {
+    // iOS & macOS — handled by plugin
+    await flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<
+        IOSFlutterLocalNotificationsPlugin>()
+        ?.requestPermissions(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+  } else if (Platform.isAndroid) {
+    // Android 13+ requires explicit permission for notifications
+    if (await Permission.notification.isDenied) {
+      await Permission.notification.request();
+    }
+  }
+
+  await flutterLocalNotificationsPlugin.initialize(initSettings);
 
   await Firebase.initializeApp();
   await Hive.initFlutter();
@@ -166,19 +214,24 @@ Future<void> main() async {
   Hive.registerAdapter(InterestTypeAdapter());
   Hive.registerAdapter(ContactTypeAdapter());
   Hive.registerAdapter(InterestPeriodAdapter());
+  Hive.registerAdapter(SingleLoanAdapter());
+  Hive.registerAdapter(InstallmentAdapter());
 
 
-  //   print("⚠️ Hive schema changed — deleting old boxes...");
-  //   await Hive.deleteBoxFromDisk('contacts');
-  //   await Hive.deleteBoxFromDisk('transactions');
-  //   await Hive.deleteBoxFromDisk('reminders');
-  //   await prefs.setInt('hiveSchemaVersion', hiveSchemaVersion);
-  //   print("✅ Hive boxes cleared successfully.");
+    // print("⚠️ Hive schema changed — deleting old boxes...");
+    // await Hive.deleteBoxFromDisk('contacts');
+    // await Hive.deleteBoxFromDisk('transactions');
+    // await Hive.deleteBoxFromDisk('reminders');
+    // // await prefs.setInt('hiveSchemaVersion', hiveSchemaVersion);
+    // print("✅ Hive boxes cleared successfully.");
 
-
+  //
   await Hive.openBox<Contact>('contacts');
   await Hive.openBox<Transaction>('transactions');
   await Hive.openBox<Reminder>('reminders');
+  await Hive.openBox<SingleLoan>('loans');
+  await Hive.openBox<SingleLoan>('completedLoans');
+
 
   runApp(const MyApp());
 }
@@ -205,11 +258,51 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider<ThemeProvider>(
           create: (_) => ThemeProvider(),
         ),
+        ChangeNotifierProvider<ReminderProvider>(
+          create: (_) => ReminderProvider(),
+        ),
+        ChangeNotifierProvider<LoanProvider>(
+          create: (_) => LoanProvider(),
+        ),
       ],
+      // child: MaterialApp(
+      //   debugShowCheckedModeBanner: false,
+      //   home: const TestScreen(),
+      // )
       child: MaterialApp.router(
         debugShowCheckedModeBanner: false,
         routerConfig: appRouter,
       ),
+    );
+  }
+}
+
+
+
+class TestScreen extends StatelessWidget {
+  const TestScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.grey[100],
+      appBar: AppBar(
+        title: const Text("Loan Summary Test"),
+      ),
+
+      body: LoanScreen()
+      // Padding(
+      //   padding: const EdgeInsets.all(16.0),
+      //   child:
+      //   IntrinsicHeight(
+      //     child: LoanSummaryCard(
+      //     userName: "Gautam",
+      //     activeLoans: 3,
+      //     totalAmount: 15000,
+      //     dueAmount: 3200,
+      //   ),
+      // ),
+      // ),
     );
   }
 }

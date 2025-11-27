@@ -17,10 +17,15 @@ class ReminderAdapter extends TypeAdapter<Reminder> {
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
     return Reminder(
-      id: fields[0] as String,
-      title: fields[1] as String,
+      contactId: fields[0] as String,
+      reminderId: fields[7] as int,
+      scheduledDate: fields[6] as DateTime,
       amount: fields[2] as double,
-      dueDate: fields[3] as DateTime,
+      dueDate: fields[3] as DateTime?,
+      createAt: fields[9] as DateTime,
+      name: fields[10] as String,
+      message: fields[8] as String,
+      title: fields[1] as String,
       daysLeft: fields[4] as int,
       isCompleted: fields[5] as bool,
     );
@@ -29,9 +34,9 @@ class ReminderAdapter extends TypeAdapter<Reminder> {
   @override
   void write(BinaryWriter writer, Reminder obj) {
     writer
-      ..writeByte(6)
+      ..writeByte(11)
       ..writeByte(0)
-      ..write(obj.id)
+      ..write(obj.contactId)
       ..writeByte(1)
       ..write(obj.title)
       ..writeByte(2)
@@ -41,7 +46,17 @@ class ReminderAdapter extends TypeAdapter<Reminder> {
       ..writeByte(4)
       ..write(obj.daysLeft)
       ..writeByte(5)
-      ..write(obj.isCompleted);
+      ..write(obj.isCompleted)
+      ..writeByte(6)
+      ..write(obj.scheduledDate)
+      ..writeByte(7)
+      ..write(obj.reminderId)
+      ..writeByte(8)
+      ..write(obj.message)
+      ..writeByte(9)
+      ..write(obj.createAt)
+      ..writeByte(10)
+      ..write(obj.name);
   }
 
   @override

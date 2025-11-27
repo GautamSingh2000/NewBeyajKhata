@@ -1,0 +1,35 @@
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- Background Circle (Light Gray/Blue tint) -->
+    <circle cx="100" cy="100" r="80" fill="#F9FAFC"/>
+
+    <!-- Decorative Background Blobs (Using lighter shades of your blue) -->
+    <circle cx="40" cy="50" r="10" fill="#1565C0" fill-opacity="0.1"/>
+    <circle cx="160" cy="150" r="15" fill="#1565C0" fill-opacity="0.1"/>
+    <circle cx="170" cy="40" r="5" fill="#1FB6B0" fill-opacity="0.2"/>
+
+    <!-- The Wallet Body (Gradient Start Color) -->
+    <rect x="50" y="70" width="100" height="70" rx="12" fill="#1565C0"/>
+
+    <!-- Wallet Flap/Interior (Gradient Mid Color) -->
+    <path d="M50 82C50 75.3726 55.3726 70 62 70H138C144.627 70 150 75.3726 150 82V90H50V82Z" fill="#0D47A1"/>
+
+    <!-- The "Empty" Paper/Receipt sliding out (Gray/White) -->
+    <path d="M65 70V55C65 52.2386 67.2386 50 70 50H130C132.761 50 135 52.2386 135 55V70" fill="white" fill-opacity="0.9"/>
+    <rect x="75" y="58" width="50" height="4" rx="2" fill="#EEEEEE"/>
+    <rect x="75" y="66" width="30" height="4" rx="2" fill="#EEEEEE"/>
+
+    <!-- Shadow below flap -->
+    <path d="M50 90H150V95H50V90Z" fill="black" fill-opacity="0.1"/>
+
+    <!-- Wallet Strap (Secondary Teal Color) -->
+    <rect x="130" y="85" width="28" height="12" rx="4" fill="#1FB6B0"/>
+    <circle cx="150" cy="91" r="2" fill="white"/>
+
+    <!-- "Zero" / Empty Indicator (Floating Element) -->
+    <g transform="translate(120, 110)">
+        <circle cx="15" cy="15" r="20" fill="white" stroke="#EEEEEE" stroke-width="2"/>
+        <!-- Magnifying glass icon -->
+        <path d="M15 10C12.2386 10 10 12.2386 10 15C10 17.7614 12.2386 20 15 20C17.7614 20 20 17.7614 20 15C20 12.2386 17.7614 10 15 10Z" stroke="#1565C0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M22 22L19 19" stroke="#1565C0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+</svg>

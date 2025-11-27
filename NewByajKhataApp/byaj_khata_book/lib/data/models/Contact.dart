@@ -64,6 +64,9 @@ class Contact {
   @HiveField(17)
   String? profileImage;
 
+  @HiveField(18)
+  DateTime? lastInterestCycleDate;
+
   Contact({
     //contactId is the combination of phoneNo_name or phoneNo_InterestType
     required this.contactId,
@@ -71,7 +74,7 @@ class Contact {
     this.displayPhone,
     this.initials = "AA",
     this.interestRate = 0,
-    this.interestPeriod,
+    this.interestPeriod = InterestPeriod.yearly,
     this.contactType = ContactType.borrower,
     this.colorValue,
     this.dayAgo = 0,
@@ -79,6 +82,7 @@ class Contact {
     this.interestType = InterestType.withoutInterest,
     this.interestDue = 0,
     this.isGet = false,
+    this.lastInterestCycleDate,
     this.isNewContact = false,
     this.profileImage,
     this.principal = 0,
