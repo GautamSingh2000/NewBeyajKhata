@@ -9,25 +9,29 @@ class TopAppBar extends StatelessWidget implements PreferredSizeWidget {
   final List<Widget>? actions;
   final double height;
 
+  /// NEW → allows parent to override what happens when menu is tapped
+  final VoidCallback? onMenuTap;
+
   const TopAppBar({
     super.key,
     required this.title,
     this.showBackButton = false,
     this.actions,
     this.height = kToolbarHeight + 8,
+    this.onMenuTap,
   });
 
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      automaticallyImplyLeading: false, // avoid duplicate back icon
+      automaticallyImplyLeading: false,
       backgroundColor: AppColors.primaryColor,
       elevation: 4,
       shadowColor: Colors.black.withOpacity(0.1),
       centerTitle: false,
-      leadingWidth: 56, // ✅ keeps spacing consistent
+      leadingWidth: 56,
 
-      // ✅ Leading icon (menu/back)
+      // ---------------- LEADING ICON ----------------
       leading: Builder(
         builder: (context) => IconButton(
           icon: SvgPicture.asset(
@@ -38,28 +42,35 @@ class TopAppBar extends StatelessWidget implements PreferredSizeWidget {
             height: 24,
             colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
           ),
+
           onPressed: () {
             if (showBackButton) {
               Navigator.pop(context);
             } else {
-              Scaffold.of(context).openDrawer();
+              // If GlobalScreen passes a menu handler → use it
+              if (onMenuTap != null) {
+                onMenuTap!();
+              } else {
+                // default behaviour → open drawer safely
+                Scaffold.of(context).openDrawer();
+              }
             }
           },
         ),
       ),
 
-      // ✅ Title (flexible width)
+      // ---------------- TITLE ----------------
       title: LayoutBuilder(
         builder: (context, constraints) {
           return ConstrainedBox(
             constraints: BoxConstraints(
-              maxWidth: constraints.maxWidth * 0.7, // keeps text safe
+              maxWidth: constraints.maxWidth * 0.7,
             ),
             child: Text(
               title,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
+              textAlign: TextAlign.left,
               style: GoogleFonts.poppins(
                 color: Colors.white,
                 fontSize: 18,
@@ -70,7 +81,7 @@ class TopAppBar extends StatelessWidget implements PreferredSizeWidget {
         },
       ),
 
-      // ✅ Compact actions (fixed padding, safe in narrow screens)
+      // ---------------- ACTIONS ----------------
       actions: actions
           ?.map(
             (w) => Padding(
@@ -82,7 +93,9 @@ class TopAppBar extends StatelessWidget implements PreferredSizeWidget {
         ),
       )
           .toList() ??
-          [const SizedBox(width: 8)],
+          [
+            const SizedBox(width: 8),
+          ],
     );
   }
 

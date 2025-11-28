@@ -48,12 +48,18 @@ class BottomNavBar extends StatelessWidget {
             _buildNavItem(
               context,
               index: 2,
+              icon: "assets/icons/interest_icon.svg",
+              label: "Interest",
+            ),
+            _buildNavItem(
+              context,
+              index: 3,
               icon: "assets/icons/selected_emi.svg",
               label: "EMI",
             ),
             _buildNavItem(
               context,
-              index: 3,
+              index: 4,
               icon: "assets/icons/selected_profile_icon.svg", // add icon
               label: "Profile",
             ),
